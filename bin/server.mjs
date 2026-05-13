@@ -1525,7 +1525,7 @@ async function handleRpc(request) {
   if (!request.method) return;
   try {
     if (request.method === "initialize") {
-      writeRpc({ jsonrpc: "2.0", id: request.id, result: { protocolVersion: "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "project-google-accounts", version: "0.1.1" } } });
+      writeRpc({ jsonrpc: "2.0", id: request.id, result: { protocolVersion: "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "project-google-accounts", version: "0.1.2" } } });
       return;
     }
     if (request.method === "tools/list") {

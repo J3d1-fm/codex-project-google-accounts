@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.2 - 2026-05-13
+
+### Fixed
+- Fixed public packaging so `skills/project-google-accounts/SKILL.md` is tracked and included in GitHub source archives.
+- Scoped the local-state ignore rule to the repository root so it does not hide plugin skill files.
+
 ## v0.1.1 - 2026-05-13
 
 ### Added

@@ -1,5 +1,5 @@
 Codex Project Google Accounts technical documentation
-Version: v0.1.1
+Version: v0.1.2
 Date: 2026-05-13
 
 Purpose
@@ -53,4 +53,4 @@ Before publishing, verify that the repository does not contain:
 
 Rollback
 --------
-Use git tags/releases for rollback. The first public version is v0.1.1.
+Use git tags/releases for rollback. The first complete public package version is v0.1.2.

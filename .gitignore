@@ -6,7 +6,7 @@ npm-debug.log*
 
 # Local Google account state
 .codex/google-account.json
-project-google-accounts/
+/project-google-accounts/
 tokens/
 oauth-client.json
 
