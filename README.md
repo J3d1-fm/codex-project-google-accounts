@@ -121,6 +121,36 @@ gmail.search({
 })
 ```
 
+Create a draft with an attachment:
+
+```json
+gmail.create_draft({
+  "to": "recipient@example.com",
+  "subject": "Documents",
+  "body": "Attached are the files.",
+  "attachments": [
+    {
+      "path": "/absolute/path/to/file.pdf"
+    }
+  ]
+})
+```
+
+Send a reply with an attachment:
+
+```json
+gmail.reply_thread_latest({
+  "thread_id": "THREAD_ID",
+  "body": "Attached are the files.",
+  "attachments": [
+    {
+      "path": "/absolute/path/to/file.pdf",
+      "mime_type": "application/pdf"
+    }
+  ]
+})
+```
+
 List calendar events:
 
 ```json
@@ -177,7 +207,7 @@ Reconnect keeps the project binding and replaces the local token for that accoun
 - Never commit `tokens/*.json`.
 - Use separate Google Cloud OAuth clients for different environments if needed.
 - Review Google API scopes before authorizing.
-- Email sends, calendar writes, and Drive writes are external actions. Confirm them before running.
+- Email sends, attachments, calendar writes, and Drive writes are external actions. Confirm them before running.
 
 ## Development Checks
 

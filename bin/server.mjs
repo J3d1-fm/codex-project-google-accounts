@@ -129,6 +129,19 @@ const TOOLS = [
         body: { type: "string" },
         cc: { type: "string" },
         bcc: { type: "string" },
+        attachments: {
+          type: "array",
+          description: "Optional attachments. Each item can use path for a local file or content_base64 for inline content.",
+          items: {
+            type: "object",
+            properties: {
+              path: { type: "string", description: "Local file path to attach." },
+              filename: { type: "string", description: "Optional attachment filename. Defaults to basename(path)." },
+              mime_type: { type: "string", description: "Optional MIME type. Guessed from filename/path when omitted." },
+              content_base64: { type: "string", description: "Optional base64 content when path is not supplied." }
+            }
+          }
+        },
         reply_message_id: { type: "string" },
         project_path: { type: "string" }
       },
@@ -146,6 +159,19 @@ const TOOLS = [
         body: { type: "string" },
         cc: { type: "string" },
         bcc: { type: "string" },
+        attachments: {
+          type: "array",
+          description: "Optional attachments. Each item can use path for a local file or content_base64 for inline content.",
+          items: {
+            type: "object",
+            properties: {
+              path: { type: "string", description: "Local file path to attach." },
+              filename: { type: "string", description: "Optional attachment filename. Defaults to basename(path)." },
+              mime_type: { type: "string", description: "Optional MIME type. Guessed from filename/path when omitted." },
+              content_base64: { type: "string", description: "Optional base64 content when path is not supplied." }
+            }
+          }
+        },
         reply_message_id: { type: "string" },
         project_path: { type: "string" }
       },
@@ -164,6 +190,19 @@ const TOOLS = [
         subject: { type: "string", description: "Optional override. Defaults to Re: latest subject." },
         cc: { type: "string", description: "Optional override. Defaults to latest Cc plus the account address if needed." },
         bcc: { type: "string" },
+        attachments: {
+          type: "array",
+          description: "Optional attachments. Each item can use path for a local file or content_base64 for inline content.",
+          items: {
+            type: "object",
+            properties: {
+              path: { type: "string", description: "Local file path to attach." },
+              filename: { type: "string", description: "Optional attachment filename. Defaults to basename(path)." },
+              mime_type: { type: "string", description: "Optional MIME type. Guessed from filename/path when omitted." },
+              content_base64: { type: "string", description: "Optional base64 content when path is not supplied." }
+            }
+          }
+        },
         project_path: { type: "string" }
       },
       required: ["thread_id", "body"]
@@ -943,6 +982,50 @@ function encodeHeaderValue(value = "") {
   return `=?UTF-8?B?${Buffer.from(text, "utf8").toString("base64")}?=`;
 }
 
+function safeHeaderValue(value = "") {
+  return String(value || "").replace(/[\r\n]+/g, " ").trim();
+}
+
+function foldBase64(value = "") {
+  return String(value).replace(/\s+/g, "").match(/.{1,76}/g)?.join("\r\n") || "";
+}
+
+function guessMimeType(filename = "") {
+  const ext = path.extname(String(filename)).toLowerCase();
+  return {
+    ".csv": "text/csv",
+    ".doc": "application/msword",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".gif": "image/gif",
+    ".jpeg": "image/jpeg",
+    ".jpg": "image/jpeg",
+    ".json": "application/json",
+    ".md": "text/markdown",
+    ".pdf": "application/pdf",
+    ".png": "image/png",
+    ".ppt": "application/vnd.ms-powerpoint",
+    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ".txt": "text/plain",
+    ".webp": "image/webp",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".zip": "application/zip"
+  }[ext] || "application/octet-stream";
+}
+
+async function loadEmailAttachment(attachment = {}) {
+  if (!attachment.path && !attachment.content_base64) {
+    throw new Error("Each attachment must include either path or content_base64.");
+  }
+  const sourcePath = attachment.path ? path.resolve(String(attachment.path)) : "";
+  const filename = safeHeaderValue(attachment.filename || (sourcePath ? path.basename(sourcePath) : "attachment"));
+  const mimeType = safeHeaderValue(attachment.mime_type || guessMimeType(filename));
+  const base64 = attachment.content_base64
+    ? String(attachment.content_base64).replace(/\s+/g, "")
+    : (await readFile(sourcePath)).toString("base64");
+  return { filename, mimeType, base64 };
+}
+
 async function getReplyContext(account, replyMessageId) {
   if (!replyMessageId) return {};
   const msg = await googleFetch(account, `https://gmail.googleapis.com/gmail/v1/users/me/messages/${replyMessageId}?format=metadata&metadataHeaders=Message-ID&metadataHeaders=References&metadataHeaders=Subject`);
@@ -1017,19 +1100,52 @@ async function getLatestThreadReply(account, threadId) {
   };
 }
 
-function makeRawEmail({ to, subject, body, cc, bcc, replyContext = {} }) {
-  const lines = [
+async function makeRawEmail({ to, subject, body, cc, bcc, attachments = [], replyContext = {} }) {
+  const commonHeaders = [
     `To: ${to}`,
     cc ? `Cc: ${cc}` : null,
     bcc ? `Bcc: ${bcc}` : null,
     `Subject: ${encodeHeaderValue(subject)}`,
     "MIME-Version: 1.0",
-    "Content-Type: text/plain; charset=UTF-8",
     replyContext.inReplyTo ? `In-Reply-To: ${replyContext.inReplyTo}` : null,
-    replyContext.references ? `References: ${replyContext.references}` : null,
-    "",
-    body
+    replyContext.references ? `References: ${replyContext.references}` : null
   ].filter((line) => line !== null);
+
+  const loadedAttachments = await Promise.all((attachments || []).map(loadEmailAttachment));
+  if (!loadedAttachments.length) {
+    const lines = [
+      ...commonHeaders,
+      "Content-Type: text/plain; charset=UTF-8",
+      "Content-Transfer-Encoding: 8bit",
+      "",
+      body || ""
+    ];
+    return Buffer.from(lines.join("\r\n"), "utf8").toString("base64url");
+  }
+
+  const boundary = `codex_${randomBytes(12).toString("hex")}`;
+  const lines = [
+    ...commonHeaders,
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: 8bit",
+    "",
+    body || ""
+  ];
+
+  for (const attachment of loadedAttachments) {
+    lines.push(
+      `--${boundary}`,
+      `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"`,
+      "Content-Transfer-Encoding: base64",
+      `Content-Disposition: attachment; filename="${attachment.filename}"`,
+      "",
+      foldBase64(attachment.base64)
+    );
+  }
+  lines.push(`--${boundary}--`, "");
   return Buffer.from(lines.join("\r\n"), "utf8").toString("base64url");
 }
 
@@ -1210,7 +1326,7 @@ async function callTool(name, args = {}) {
     case "gmail.create_draft": {
       const account = await requireBoundAccount(args.project_path);
       const replyContext = await getReplyContext(account, args.reply_message_id);
-      const raw = makeRawEmail({ ...args, replyContext });
+      const raw = await makeRawEmail({ ...args, replyContext });
       const message = replyContext.threadId ? { raw, threadId: replyContext.threadId } : { raw };
       return await googleFetch(account, "https://gmail.googleapis.com/gmail/v1/users/me/drafts", {
         method: "POST",
@@ -1221,7 +1337,7 @@ async function callTool(name, args = {}) {
     case "gmail.send": {
       const account = await requireBoundAccount(args.project_path);
       const replyContext = await getReplyContext(account, args.reply_message_id);
-      const raw = makeRawEmail({ ...args, replyContext });
+      const raw = await makeRawEmail({ ...args, replyContext });
       const message = replyContext.threadId ? { raw, threadId: replyContext.threadId } : { raw };
       return await googleFetch(account, "https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
         method: "POST",
@@ -1233,12 +1349,13 @@ async function callTool(name, args = {}) {
       const account = await requireBoundAccount(args.project_path);
       const latest = await getLatestThreadReply(account, args.thread_id);
       const to = args.to || latest.to;
-      const raw = makeRawEmail({
+      const raw = await makeRawEmail({
         to,
         subject: args.subject || latest.subject,
         body: args.body,
         cc: args.cc !== undefined ? args.cc : mergeCc({ values: [latest.cc], exclude: [account, to] }),
         bcc: args.bcc,
+        attachments: args.attachments,
         replyContext: latest.replyContext
       });
       const sent = await googleFetch(account, "https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
@@ -1525,7 +1642,7 @@ async function handleRpc(request) {
   if (!request.method) return;
   try {
     if (request.method === "initialize") {
-      writeRpc({ jsonrpc: "2.0", id: request.id, result: { protocolVersion: "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "project-google-accounts", version: "0.1.2" } } });
+      writeRpc({ jsonrpc: "2.0", id: request.id, result: { protocolVersion: "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "project-google-accounts", version: "0.1.3" } } });
       return;
     }
     if (request.method === "tools/list") {

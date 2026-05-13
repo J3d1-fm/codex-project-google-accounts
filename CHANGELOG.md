@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.3 - 2026-05-13
+
+### Added
+- Added Gmail attachment support for `gmail.send`, `gmail.create_draft`, and `gmail.reply_thread_latest`.
+- Attachments can be provided as local file paths or base64 content.
+
+### Changed
+- Updated fast-path skill guidance so project-bound Gmail can attach files directly without falling back to generic Gmail connector flows.
+
 ## v0.1.2 - 2026-05-13
 
 ### Fixed

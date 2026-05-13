@@ -1,6 +1,6 @@
 {
   "name": "project-google-accounts",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Route Gmail, Google Calendar, and Google Drive access through project-specific Google OAuth accounts.",
   "author": {
     "name": "Open Source Contributors",

@@ -12,6 +12,7 @@ Use this plugin when a Codex project needs its own Gmail, Google Calendar, or Go
 - If the current project already has `.codex/google-account.json`, local instructions name the binding, or the thread context already names the project-bound account, call the target Gmail/Calendar/Drive tool directly. Do not call `google_accounts.project_status`, `gmail.profile`, or connector profile checks first.
 - Treat `google_accounts.project_status` and `gmail.profile` as diagnostics, not prerequisites. Use them only when the binding is unknown, the user asks which account is connected, or a previous tool call failed with an account/token/scope error.
 - For a short reply to a known Gmail thread, prefer `gmail.reply_thread_latest` with the known `thread_id`.
+- For Gmail attachments, pass `attachments` directly to `gmail.send`, `gmail.create_draft`, or `gmail.reply_thread_latest`. Each attachment can use `path` for a local file or `content_base64`; do not switch to generic Gmail connector flows just to attach files.
 - For Calendar reads, prefer `calendar.list_events` with an explicit `time_min`/`time_max` window. Use `calendar.freebusy` when the user asks for availability.
 - For Calendar writes with known event details, call `calendar.create_event`, `calendar.update_event`, or `calendar.delete_event` directly after normal user confirmation rules. Do not preflight with calendar/account diagnostics unless the destination calendar/account is ambiguous.
 - For Drive, use `drive.ensure_project_folder` once per project only if no default project folder is already known. Then `drive.create_folder`, `drive.create_file`, `drive.create_google_doc`, and `drive.list_folder` default to that saved project folder.
@@ -35,6 +36,6 @@ Use this plugin when a Codex project needs its own Gmail, Google Calendar, or Go
 
 ## Safety
 
-- Sending email, creating drafts, creating/updating/deleting calendar events, and creating/moving/renaming Drive files or folders are external actions. Follow normal confirmation rules before performing writes.
+- Sending email, creating drafts, attaching files, creating/updating/deleting calendar events, and creating/moving/renaming Drive files or folders are external actions. Follow normal confirmation rules before performing writes.
 - OAuth URLs grant access to Gmail, Calendar, and Drive scopes. Explain the account and destination before asking the user to authorize.
 - Tokens are stored locally by the MCP server, outside the project repository.
