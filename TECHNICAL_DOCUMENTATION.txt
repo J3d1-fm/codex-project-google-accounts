@@ -1,0 +1,56 @@
+Codex Project Google Accounts technical documentation
+Version: v0.1.1
+Date: 2026-05-13
+
+Purpose
+-------
+This repository packages a local Codex MCP plugin that lets Codex route Gmail, Google Calendar, and Google Drive work through a Google account bound to a local project folder.
+
+Architecture
+------------
+1. Codex loads .codex-plugin/plugin.json.
+2. The plugin declares .mcp.json as its MCP server config.
+3. The MCP server runs bin/server.mjs with Node.js.
+4. Project bindings are stored outside the repository under:
+   ~/.codex/project-google-accounts/projects.json
+5. OAuth tokens are stored outside the repository under:
+   ~/.codex/project-google-accounts/tokens/
+6. A project-local hint can be stored under:
+   <project>/.codex/google-account.json
+
+Fast-path rule
+--------------
+When a project binding is already known, the agent should call the requested Gmail, Calendar, or Drive tool directly. Profile, status, reconnect, and account diagnostics are fallback steps only when the binding is unknown, the user asks for diagnostics, or a direct operation fails.
+
+Main files
+----------
+.codex-plugin/plugin.json
+.mcp.json
+bin/server.mjs
+skills/project-google-accounts/SKILL.md
+README.md
+CHANGELOG.md
+LICENSE
+
+Validation
+----------
+Run:
+node --check bin/server.mjs
+
+Run:
+python3 /path/to/quick_validate.py skills/project-google-accounts
+
+Security checklist
+------------------
+Before publishing, verify that the repository does not contain:
+- access tokens
+- refresh tokens
+- OAuth client secrets
+- personal email addresses
+- personal local filesystem paths
+- logs
+- project-specific private documentation
+
+Rollback
+--------
+Use git tags/releases for rollback. The first public version is v0.1.1.

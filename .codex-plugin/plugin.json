@@ -1,0 +1,47 @@
+{
+  "name": "project-google-accounts",
+  "version": "0.1.1",
+  "description": "Route Gmail, Google Calendar, and Google Drive access through project-specific Google OAuth accounts.",
+  "author": {
+    "name": "Open Source Contributors",
+    "email": "maintainers@example.com",
+    "url": "https://github.com/"
+  },
+  "homepage": "https://github.com/J3d1-fm/codex-project-google-accounts",
+  "repository": "https://github.com/J3d1-fm/codex-project-google-accounts",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "gmail",
+    "calendar",
+    "drive",
+    "google",
+    "oauth",
+    "mcp",
+    "multi-account"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Project Google Accounts",
+    "shortDescription": "Use different Google accounts per Codex project",
+    "longDescription": "Local MCP server that maps project folders to Google OAuth accounts and exposes direct Gmail, Google Calendar, and Google Drive tools without changing the account used to sign in to Codex.",
+    "developerName": "Open Source Contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/J3d1-fm/codex-project-google-accounts",
+    "privacyPolicyURL": "https://policies.google.com/privacy",
+    "termsOfServiceURL": "https://policies.google.com/terms",
+    "defaultPrompt": [
+      "Connect a Google account for this project",
+      "Check Gmail for this project account",
+      "Check Calendar for this project account",
+      "Create a Google Doc in this project account"
+    ],
+    "brandColor": "#4285F4",
+    "screenshots": []
+  }
+}

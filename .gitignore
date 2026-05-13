@@ -1,0 +1,16 @@
+.DS_Store
+node_modules/
+npm-debug.log*
+.env
+.env.*
+
+# Local Google account state
+.codex/google-account.json
+project-google-accounts/
+tokens/
+oauth-client.json
+
+# Logs and temporary files
+*.log
+tmp/
+temp/

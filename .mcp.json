@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "project-google-accounts": {
+      "command": "node",
+      "args": [
+        "./bin/server.mjs"
+      ],
+      "cwd": "."
+    }
+  }
+}
